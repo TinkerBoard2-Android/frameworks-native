@@ -77,6 +77,8 @@
 #include <unordered_set>
 #include <utility>
 
+#define RK_FPS                 (1)
+
 using namespace android::surfaceflinger;
 
 namespace android {
@@ -297,6 +299,11 @@ public:
     // is received
     // TODO: this should be made accessible only to MessageQueue
     void onMessageReceived(int32_t what);
+
+#if RK_FPS
+    //add by rk for fps
+    void debugShowFPS() const;
+#endif
 
     // for debugging only
     // TODO: this should be made accessible only to HWComposer
@@ -1078,6 +1085,11 @@ private:
 
     // Static screen stats
     bool mHasPoweredOff = false;
+
+#if RK_FPS
+    //add by rk for fps
+    int mDebugFPS;
+#endif
 
     size_t mNumLayers = 0;
 
