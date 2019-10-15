@@ -63,13 +63,18 @@ FramebufferSurface::FramebufferSurface(HWComposer& hwc, DisplayId displayId,
         mHasPendingRelease(false),
         mPreviousBufferSlot(BufferQueue::INVALID_BUFFER_SLOT),
         mPreviousBuffer() {
-    ALOGV("Creating for display %s", to_string(displayId).c_str());
+    ALOGD("Creating for display %s", to_string(displayId).c_str());
 
     mName = "FramebufferSurface";
     mConsumer->setConsumerName(mName);
-    mConsumer->setConsumerUsageBits(GRALLOC_USAGE_HW_FB |
-                                       GRALLOC_USAGE_HW_RENDER |
-                                       GRALLOC_USAGE_HW_COMPOSER);
+
+    /* modify usage for rockchip afbc layer select */
+    uint32_t flags = GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_RENDER |
+                     GRALLOC_USAGE_HW_COMPOSER;
+    if (displayId.value == HWC_DISPLAY_EXTERNAL)
+      flags |= GRALLOC_USAGE_EXTERNAL_DISP;
+    mConsumer->setConsumerUsageBits(flags);
+
     const auto& activeConfig = mHwc.getActiveConfig(displayId);
     mConsumer->setDefaultBufferSize(activeConfig->getWidth(),
             activeConfig->getHeight());
