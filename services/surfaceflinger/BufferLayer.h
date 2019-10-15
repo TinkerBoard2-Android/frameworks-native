@@ -50,6 +50,15 @@ public:
     explicit BufferLayer(const LayerCreationArgs& args);
     ~BufferLayer() override;
 
+    // Use rk ashmem -------
+    int get_handle_displayStereo(buffer_handle_t hnd);
+    int set_handle_displayStereo(buffer_handle_t hnd, int32_t displayStereo);
+    int get_handle_alreadyStereo(buffer_handle_t hnd);
+    int set_handle_alreadyStereo(buffer_handle_t hnd, int32_t alreadyStereo);
+    int get_handle_layername(buffer_handle_t hnd, char* layername, unsigned long len);
+    int set_handle_layername(buffer_handle_t hnd, const char* layername);
+    // Use rk ashmem -------
+
     // -----------------------------------------------------------------------
     // Overriden from Layer
     // -----------------------------------------------------------------------
