@@ -878,8 +878,11 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
         ALOGV("Drawing empty layer stack");
         return NO_ERROR;
     }
-
-    if (bufferFence.get() >= 0 && !waitFence(std::move(bufferFence))) {
+#if MALI_PRODUCT_ID_450 || MALI_PRODUCT_ID_400
+        if(bufferFence.get() >= 0){     //.RK ext: don't use waitFence before solve the problem(eglWaitSyncKHR didn't wait release fence) 
+#else
+        if (bufferFence.get() >= 0 && !waitFence(std::move(bufferFence))) {
+#endif
         ATRACE_NAME("Waiting before draw");
         sync_wait(bufferFence.get(), -1);
     }
