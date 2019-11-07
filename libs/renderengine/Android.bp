@@ -7,6 +7,7 @@ cc_defaults {
         "-Wthread-safety",
         "-Wunused",
         "-Wunreachable-code",
+        "-DRK_NV12_10_TO_NV12",
     ],
 }
 
@@ -30,7 +31,12 @@ cc_defaults {
         "libsync",
         "libui",
         "libutils",
+        "librga",
     ],
+    include_dirs:[
+        "hardware/rockchip/librga",
+        "hardware/rockchip/librga/normal",
+     ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
 }

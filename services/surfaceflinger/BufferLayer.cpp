@@ -359,6 +359,10 @@ bool BufferLayer::prepareClientLayer(const RenderArea& renderArea, const Region&
         }
         return false;
     }
+
+    //rk_ext: Deliver to GLESRenderEngine for 10bit to 8bit
+    layer.source.buffer.currentcrop = mCurrentCrop;
+
     bool blackOutLayer =
             (isProtected() && !supportProtectedContent) || (isSecure() && !renderArea.isSecure());
     const State& s(getDrawingState());

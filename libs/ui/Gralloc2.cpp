@@ -120,6 +120,7 @@ status_t Gralloc2Mapper::createDescriptor(void* bufferDescriptorInfo,
     BufferDescriptor* outDescriptor = static_cast<BufferDescriptor*>(outBufferDescriptor);
 
     status_t status = validateBufferDescriptorInfo(descriptorInfo);
+    status = NO_ERROR;
     if (status != NO_ERROR) {
         return status;
     }
