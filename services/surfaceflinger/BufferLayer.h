@@ -48,7 +48,7 @@ namespace android {
 class BufferLayer : public Layer {
 public:
     explicit BufferLayer(const LayerCreationArgs& args);
-    ~BufferLayer() override;
+    virtual ~BufferLayer() override;
 
     // Use rk ashmem -------
     int get_handle_displayStereo(buffer_handle_t hnd);
