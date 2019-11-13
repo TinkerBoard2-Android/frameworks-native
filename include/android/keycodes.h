@@ -723,6 +723,7 @@ enum {
     AKEYCODE_NAVIGATE_NEXT   = 261,
     AKEYCODE_NAVIGATE_IN     = 262,
     AKEYCODE_NAVIGATE_OUT    = 263,
+
     /** Primary stem key for Wear
      * Main power/reset button on watch. */
     AKEYCODE_STEM_PRIMARY = 264,
@@ -776,7 +777,13 @@ enum {
     AKEYCODE_THUMBS_DOWN = 287,
     /** Used to switch current account that is consuming content.
      * May be consumed by system to switch current viewer profile. */
-    AKEYCODE_PROFILE_SWITCH = 288
+    AKEYCODE_PROFILE_SWITCH = 288,
+    /** Simulate mouse key. Apps can use this to control mouse touch event by remotecontrol. */
+    AKEYCODE_TV_KEYMOUSE_LEFT = 289,
+    AKEYCODE_TV_KEYMOUSE_RIGHT = 290,
+    AKEYCODE_TV_KEYMOUSE_UP = 291,
+    AKEYCODE_TV_KEYMOUSE_DOWN = 292,
+    AKEYCODE_TV_KEYMOUSE_MODE_SWITCH = 293
 
     // NOTE: If you add a new keycode here you must also add it to several other files.
     //       Refer to frameworks/base/core/java/android/view/KeyEvent.java for the full list.
