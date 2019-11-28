@@ -30,7 +30,6 @@ cc_defaults {
         "libsync",
         "libui",
         "libutils",
-        "librga",
     ],
     include_dirs:[
         "hardware/rockchip/librga",
