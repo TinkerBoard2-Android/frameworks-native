@@ -507,6 +507,11 @@ void BufferLayer::setPerFrameData(const sp<const DisplayDevice>& displayDevice,
         setCompositionType(displayDevice, Hwc2::IComposerClient::Composition::DEVICE);
     }
 
+    if(displayDevice->getInstallOrientation()){
+        ALOGV("[%s] Requesting CLIENT composition", mName.string());
+        setCompositionType(displayDevice, Hwc2::IComposerClient::Composition::CLIENT);
+    }
+
     ui::Dataspace dataspace = isColorSpaceAgnostic() && targetDataspace != ui::Dataspace::UNKNOWN
             ? targetDataspace
             : mCurrentDataSpace;
