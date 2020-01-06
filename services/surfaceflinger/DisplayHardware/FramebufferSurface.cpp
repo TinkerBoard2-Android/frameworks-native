@@ -72,7 +72,7 @@ FramebufferSurface::FramebufferSurface(HWComposer& hwc, DisplayId displayId,
     uint32_t flags = GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_RENDER |
                      GRALLOC_USAGE_HW_COMPOSER;
     if (displayId.value == HWC_DISPLAY_EXTERNAL)
-      flags |= GRALLOC_USAGE_EXTERNAL_DISP;
+      flags |= GRALLOC_USAGE__RK_EXT__EXTERNAL_DISP;
     mConsumer->setConsumerUsageBits(flags);
 
     const auto& activeConfig = mHwc.getActiveConfig(displayId);
