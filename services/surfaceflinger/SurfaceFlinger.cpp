@@ -1862,6 +1862,12 @@ void SurfaceFlinger::handleMessageRefresh() {
         doComposition(display, repaintEverything);
     }
 
+    // For rk:
+    // Adapt to HWC1,all displays call postFramebuffer after prepareFrame
+    for (const auto& [token, display] : mDisplays) {
+        postFramebuffer(display);
+    }
+
     logLayerStats();
 
     postFrame();
@@ -2553,7 +2559,6 @@ void SurfaceFlinger::doComposition(const sp<DisplayDevice>& displayDevice, bool 
         display->editState().dirtyRegion.clear();
         display->getRenderSurface()->flip();
     }
-    postFramebuffer(displayDevice);
 }
 
 void SurfaceFlinger::postFrame()
