@@ -1889,6 +1889,8 @@ void SurfaceFlinger::handleMessageRefresh() {
         property_get("debug.sf.fps", value, "0");
         mDebugFPS = atoi(value);
     }
+    if(mDebugFPS > 0)
+        debugShowFPS();
 #endif
 }
 
@@ -2569,11 +2571,6 @@ void SurfaceFlinger::postFrame()
 void SurfaceFlinger::postFramebuffer(const sp<DisplayDevice>& displayDevice) {
     ATRACE_CALL();
     ALOGV("postFramebuffer");
-
-#if RK_FPS
-    if (mDebugFPS > 0)
-        debugShowFPS();
-#endif
 
     auto display = displayDevice->getCompositionDisplay();
     const auto& displayState = display->getState();
