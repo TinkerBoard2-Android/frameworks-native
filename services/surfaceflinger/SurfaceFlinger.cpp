@@ -2619,7 +2619,24 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
     }
 
     display->setLayerStack(state.layerStack);
-    display->setProjection(state.orientation, state.viewport, state.frame);
+
+    //display->setProjection(state.orientation, state.viewport, state.frame);
+    //Per-orientation Width Height problem
+    if(creationArgs.physicalOrientation == ui::ROTATION_90 ||
+       creationArgs.physicalOrientation == ui::ROTATION_270)
+    {
+        //ALOGE("rk-debug[%s %d] name:%s physicalOrientation:%d \n",
+        //    __FUNCTION__,__LINE__,state.displayName.c_str(),creationArgs.physicalOrientation);
+        display->setProjection(state.orientation, Rect(display->getHeight(),
+                                 display->getWidth()), Rect(display->getHeight(), display->getWidth()));
+    }
+    else{
+        //ALOGE("rk-debug[%s %d] name:%s physicalOrientation:%d \n",
+        //    __FUNCTION__,__LINE__,state.displayName.c_str(),creationArgs.physicalOrientation);
+        display->setProjection(state.orientation, state.viewport, state.frame);
+    }
+    //end
+
     display->setDisplayName(state.displayName);
 
     return display;
