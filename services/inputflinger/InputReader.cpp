@@ -2785,7 +2785,7 @@ void CursorInputMapper::reset(nsecs_t when) {
     mCursorButtonAccumulator.reset(getDevice());
     mCursorMotionAccumulator.reset(getDevice());
     mCursorScrollAccumulator.reset(getDevice());
-
+    mDisplayId=0;
     InputMapper::reset(when);
 }
 
@@ -2871,7 +2871,16 @@ void CursorInputMapper::sync(nsecs_t when) {
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, y);
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_X, deltaX);
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_Y, deltaY);
-        displayId = mPointerController->getDisplayId();
+        //displayId = mPointerController->getDisplayId();
+        displayId = mDisplayId;
+
+        float minX, minY, maxX, maxY;
+        if (mPointerController->getBounds(&minX, &minY, &maxX, &maxY)) {
+            if(x==minX||x==maxX||y==minY||y==maxY){
+               displayId=getPolicy()->notifyLayerstackChanged();
+               mDisplayId=displayId;
+            }
+        }
     } else {
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_X, deltaX);
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, deltaY);

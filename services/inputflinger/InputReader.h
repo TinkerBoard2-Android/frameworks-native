@@ -967,6 +967,7 @@ private:
 
     float mVWheelScale;
     float mHWheelScale;
+    int32_t mDisplayId;
 
     // Velocity controls for mouse pointer and wheel movements.
     // The controls for X and Y wheel movements are separate to keep them decoupled.

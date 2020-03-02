@@ -89,6 +89,7 @@ public:
     virtual void setButtonState(int32_t buttonState) {
         mButtonState = buttonState;
     }
+    
 
     virtual int32_t getButtonState() const {
         return mButtonState;
@@ -247,6 +248,7 @@ public:
         mConfig.showTouches = enabled;
     }
 
+
 private:
     DisplayViewport createDisplayViewport(int32_t displayId, int32_t width, int32_t height,
             int32_t orientation, const std::string& uniqueId, std::optional<uint8_t> physicalPort,
@@ -291,6 +293,10 @@ private:
     virtual std::string getDeviceAlias(const InputDeviceIdentifier&) {
         return "";
     }
+
+    virtual int32_t notifyLayerstackChanged(){
+        return 0;
+   }
 };
 
 // --- FakeEventHub ---
