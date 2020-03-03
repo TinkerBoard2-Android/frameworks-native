@@ -856,6 +856,15 @@ private:
         const auto hwcDisplayId = getHwComposer().getInternalHwcDisplayId();
         return hwcDisplayId ? getHwComposer().toPhysicalDisplayId(*hwcDisplayId) : std::nullopt;
     }
+    sp<IBinder> getExternalDisplayTokenLocked() const {
+        const auto displayId = getInternalDisplayIdLocked();
+        return displayId ? getPhysicalDisplayTokenLocked(*displayId) : nullptr;
+    }
+
+    std::optional<DisplayId> getExternalDisplayIdLocked() const {
+        const auto hwcDisplayId = getHwComposer().getExternalHwcDisplayId();
+        return hwcDisplayId ? getHwComposer().toPhysicalDisplayId(*hwcDisplayId) : std::nullopt;
+    }
 
     bool previousFrameMissed(int graceTimeMs = 0);
     void setVsyncEnabledInHWC(DisplayId displayId, HWC2::Vsync enabled);
