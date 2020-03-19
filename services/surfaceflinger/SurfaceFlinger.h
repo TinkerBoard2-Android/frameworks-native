@@ -857,7 +857,7 @@ private:
         return hwcDisplayId ? getHwComposer().toPhysicalDisplayId(*hwcDisplayId) : std::nullopt;
     }
     sp<IBinder> getExternalDisplayTokenLocked() const {
-        const auto displayId = getInternalDisplayIdLocked();
+        const auto displayId = getExternalDisplayIdLocked();
         return displayId ? getPhysicalDisplayTokenLocked(*displayId) : nullptr;
     }
 
