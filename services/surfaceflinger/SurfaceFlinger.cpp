@@ -4544,7 +4544,7 @@ void SurfaceFlinger::onInitializeDisplays() {
     d.width = 0;
     d.height = 0;
     displays.add(d);
-    if(mPhysicalDisplayTokens[*getExternalDisplayIdLocked()] != NULL){
+    if((*getExternalDisplayIdLocked()).value != 0 && mPhysicalDisplayTokens.count((*getExternalDisplayIdLocked()))){
         extend.what = DisplayState::eDisplayProjectionChanged |
                             DisplayState::eLayerStackChanged;
         extend.token = mPhysicalDisplayTokens[*getExternalDisplayIdLocked()] ;
@@ -4577,7 +4577,7 @@ void SurfaceFlinger::onInitializeDisplays() {
         frameRight = frameLeft + frameWidth;
         frameBottom = frameTop + frameHeight;
         ALOGI("Pre-registered-extenal-display ltrb = {%d,%d,%d,%d}",frameLeft,frameTop,frameRight,frameBottom);
-        extend.viewport =  Rect(getDefaultDisplayDevice()->getWidth(),getDefaultDisplayDevice()->getHeight());
+        extend.viewport =  Rect(primaryWidth,primaryHeight);
         extend.frame = Rect(frameLeft,frameTop,frameRight,frameBottom);
         extend.width = 0;
         extend.height = 0;
