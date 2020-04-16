@@ -670,10 +670,6 @@ void SurfaceFlinger::init() {
     LOG_ALWAYS_FATAL_IF(mVrFlingerRequestsDisplay,
             "Starting with vr flinger active is not currently supported.");
     mCompositionEngine->setHwComposer(getFactory().createHWComposer(getBE().mHwcServiceName));
-
-    // initialize our drawing state
-    mDrawingState = mCurrentState;
-
     mCompositionEngine->getHwComposer().registerCallback(this, getBE().mComposerSequenceId);
     // Process any initial hotplug and resulting display changes.
     processDisplayHotplugEventsLocked();
@@ -705,6 +701,9 @@ void SurfaceFlinger::init() {
             ALOGE("Failed to start vrflinger");
         }
     }
+
+    // initialize our drawing state
+    mDrawingState = mCurrentState;
 
     // set initial conditions (e.g. unblank default device)
     initializeDisplays();
@@ -2794,8 +2793,6 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
     //end
 
     display->setDisplayName(state.displayName);
-    if(!isInternalDisplay)
-        display->setPowerMode(HWC_POWER_MODE_NORMAL);
 
     return display;
 }
@@ -4533,7 +4530,6 @@ void SurfaceFlinger::onInitializeDisplays() {
     Vector<ComposerState> state;
     Vector<DisplayState> displays;
     DisplayState d;
-    DisplayState extend;
     d.what = DisplayState::eDisplayProjectionChanged |
              DisplayState::eLayerStackChanged;
     d.token = token;
@@ -4544,46 +4540,6 @@ void SurfaceFlinger::onInitializeDisplays() {
     d.width = 0;
     d.height = 0;
     displays.add(d);
-    if(mPhysicalDisplayTokens[*getExternalDisplayIdLocked()] != NULL){
-        extend.what = DisplayState::eDisplayProjectionChanged |
-                            DisplayState::eLayerStackChanged;
-        extend.token = mPhysicalDisplayTokens[*getExternalDisplayIdLocked()] ;
-        extend.layerStack = 0;
-        extend.orientation = DisplayState::eOrientationDefault;
-        extend.frame.makeInvalid();
-        extend.viewport.makeInvalid();
-        const auto& activeConfigExtend = getHwComposer().getActiveConfig(*getExternalDisplayIdLocked());
-        int extendWidth = activeConfigExtend->getWidth();
-        int extendHeight = activeConfigExtend->getHeight();
-        int primaryWidth,primaryHeight;
-        int frameLeft, frameTop,frameRight,frameBottom,frameWidth,frameHeight;
-        // primaryDisplayOrientation = 0 / 180
-        if(primaryDisplayOrientation % 2 == 0){
-           primaryWidth = getDefaultDisplayDevice()->getWidth();
-           primaryHeight = getDefaultDisplayDevice()->getHeight();
-        } else { // primaryDisplayOrientation = 90 / 270
-           primaryWidth = getDefaultDisplayDevice()->getHeight();
-           primaryHeight = getDefaultDisplayDevice()->getWidth();
-        }
-        if((primaryWidth * 1.0 / extendWidth) > (primaryHeight * 1.0 / extendHeight)){
-           frameWidth = primaryWidth / (primaryWidth * 1.0 / extendWidth);
-           frameHeight = primaryHeight / (primaryWidth * 1.0 / extendWidth);
-        }else{
-           frameWidth = primaryWidth / (primaryHeight * 1.0 / extendHeight);
-           frameHeight = primaryHeight / (primaryHeight * 1.0 / extendHeight);
-        }
-        frameLeft = (extendWidth - frameWidth) / 2;
-        frameTop = (extendHeight - frameHeight) / 2;
-        frameRight = frameLeft + frameWidth;
-        frameBottom = frameTop + frameHeight;
-        ALOGI("Pre-registered-extenal-display ltrb = {%d,%d,%d,%d}",frameLeft,frameTop,frameRight,frameBottom);
-        extend.viewport =  Rect(getDefaultDisplayDevice()->getWidth(),getDefaultDisplayDevice()->getHeight());
-        extend.frame = Rect(frameLeft,frameTop,frameRight,frameBottom);
-        extend.width = 0;
-        extend.height = 0;
-        displays.add(extend);
-    }
-
     setTransactionState(state, displays, 0, nullptr, mPendingInputWindowCommands, -1, {}, {});
 
     setPowerModeInternal(display, HWC_POWER_MODE_NORMAL);
