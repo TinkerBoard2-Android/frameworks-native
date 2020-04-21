@@ -70,10 +70,13 @@ BufferLayer::BufferLayer(const LayerCreationArgs& args)
     mProtectedByApp = args.flags & ISurfaceComposerClient::eProtectedByApp;
 
     // Use rk ashmem -------
-    int ret = hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
+    if ( NULL == g_gralloc )
+    {
+        int ret = hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
                       (const hw_module_t **)&g_gralloc);
-    if (ret) {
-        ALOGE("Failed to open gralloc module %d", ret);
+        if (ret) {
+            ALOGE("Failed to open gralloc module %d", ret);
+        }
     }
     // Use rk ashmem -------
 }
