@@ -296,7 +296,7 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
     // Vr flinger is only enabled on Daydream ready devices.
     useVrFlinger = use_vr_flinger(false);
 
-    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(2);
+    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(3);
 
     hasWideColorDisplay = has_wide_color_display(false);
 
