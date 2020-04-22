@@ -337,7 +337,7 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
     #if DYNAMIC_AFBC_TARGET
     maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(6);
     #else
-    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(2);
+    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(3);
     #endif
 
     maxGraphicsWidth = std::max(max_graphics_width(0), 0);
