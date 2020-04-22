@@ -334,8 +334,11 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
     // Vr flinger is only enabled on Daydream ready devices.
     useVrFlinger = use_vr_flinger(false);
 
-    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(2);
-
+    #if DYNAMIC_AFBC_TARGET
+    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(6);
+    #else
+    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(3);
+    #endif
     maxGraphicsWidth = std::max(max_graphics_width(0), 0);
     maxGraphicsHeight = std::max(max_graphics_height(0), 0);
 
