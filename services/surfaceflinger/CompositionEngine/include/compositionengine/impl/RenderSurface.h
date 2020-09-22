@@ -55,6 +55,7 @@ public:
     status_t beginFrame(bool mustRecompose) override;
     void prepareFrame(bool usesClientComposition, bool usesDeviceComposition) override;
     sp<GraphicBuffer> dequeueBuffer(base::unique_fd* bufferFence) override;
+	int perform(int operation, uint64_t usage) override;
     void queueBuffer(base::unique_fd readyFence) override;
     void onPresentDisplayCompleted() override;
     void flip() override;

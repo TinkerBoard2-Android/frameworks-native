@@ -41,7 +41,7 @@ cc_defaults {
 
 cc_library {
     name: "libcompositionengine",
-    defaults: ["libcompositionengine_defaults"],
+    defaults: ["libcompositionengine_defaults","cc_libcompositionengine_defaults"],
     srcs: [
         "src/ClientCompositionRequestCache.cpp",
         "src/CompositionEngine.cpp",
@@ -82,6 +82,26 @@ cc_library {
     ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
+}
+
+bootstrap_go_package {
+    name: "soong-libcompositionengine",
+    pkgPath: "android/soong/libcompositionengine",
+    deps: [
+        "blueprint",
+        "blueprint-pathtools",
+        "soong",
+        "soong-android",
+        "soong-cc",
+        "soong-genrule",
+    ],
+    srcs: [
+          "Android.go",
+    ],
+    pluginFor: ["soong_build"],
+}
+cc_libcompositionengine {
+    name: "cc_libcompositionengine_defaults"
 }
 
 cc_test {

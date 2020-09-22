@@ -126,6 +126,7 @@ public:
 
     // reset state when an external, non-virtual display is disconnected
     virtual void disconnectDisplay(DisplayId displayId) = 0;
+    virtual bool hasClientAFBC(const std::optional<DisplayId>& displayId) const =0;
 
     // get the present fence received from the last call to present.
     virtual sp<Fence> getPresentFence(DisplayId displayId) const = 0;
@@ -273,6 +274,7 @@ public:
 
     // reset state when an external, non-virtual display is disconnected
     void disconnectDisplay(DisplayId displayId) override;
+    bool hasClientAFBC(const std::optional<DisplayId>& displayId) const override;
 
     // get the present fence received from the last call to present.
     sp<Fence> getPresentFence(DisplayId displayId) const override;
@@ -382,6 +384,7 @@ private:
 
     struct DisplayData {
         bool isVirtual = false;
+		bool hasClientafbc = false;
         std::unique_ptr<HWC2::Display> hwcDisplay;
         sp<Fence> lastPresentFence = Fence::NO_FENCE; // signals when the last set op retires
         std::unordered_map<HWC2::Layer*, sp<Fence>> releaseFences;

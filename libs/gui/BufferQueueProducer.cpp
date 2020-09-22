@@ -252,6 +252,33 @@ status_t BufferQueueProducer::setAsyncMode(bool async) {
     return NO_ERROR;
 }
 
+int BufferQueueProducer::getFreeFBBufferLocked( bool isafbc) const {
+    if (mCore->mFreeBuffers.empty()) {
+        return BufferQueueCore::INVALID_BUFFER_SLOT;
+    }
+    int slot = mCore->mFreeBuffers.front();
+    mCore->mFreeBuffers.pop_front();
+    ALOGD("rk-debug-gui found first =%d, isafbc=%d,input_isafbc=%d",slot,mSlots[slot].mIsafbc,isafbc);
+    
+    for(int i = 0; i < 4;i++)
+    {
+        if(mSlots[slot].mIsafbc == isafbc)
+        {
+            break;
+        }
+        else
+        {
+            mCore->mFreeBuffers.push_back(slot);
+            slot = mCore->mFreeBuffers.front(); 
+            mCore->mFreeBuffers.pop_front();
+            ALOGD("rk-debug-gui found [%d] =%d, isafbc=%d,input_isafbc=%d",i,slot,mSlots[slot].mIsafbc,isafbc);
+           
+        }
+    }    
+    ALOGD("rk-debug-gui fininal found=%d, isafbc=%d,input_isafbc=%d",slot,mSlots[slot].mIsafbc,isafbc);
+    return slot;
+}
+
 int BufferQueueProducer::getFreeBufferLocked() const {
     if (mCore->mFreeBuffers.empty()) {
         return BufferQueueCore::INVALID_BUFFER_SLOT;
@@ -271,7 +298,7 @@ int BufferQueueProducer::getFreeSlotLocked() const {
 }
 
 status_t BufferQueueProducer::waitForFreeSlotThenRelock(FreeSlotCaller caller,
-        std::unique_lock<std::mutex>& lock, int* found) const {
+        std::unique_lock<std::mutex>& lock, int* found,bool isafbc,bool isfb) const {
     auto callerString = (caller == FreeSlotCaller::Dequeue) ?
             "dequeueBuffer" : "attachBuffer";
     bool tryAgain = true;
@@ -326,8 +353,16 @@ status_t BufferQueueProducer::waitForFreeSlotThenRelock(FreeSlotCaller caller,
                 *found = mCore->mSharedBufferSlot;
             } else {
                 if (caller == FreeSlotCaller::Dequeue) {
+                    int slot;
                     // If we're calling this from dequeue, prefer free buffers
-                    int slot = getFreeBufferLocked();
+                    if(isfb)
+                    {
+                        slot = getFreeFBBufferLocked(isafbc);                    
+                    }
+                    else
+                    {
+                        slot = getFreeBufferLocked();
+                    } 
                     if (slot != BufferQueueCore::INVALID_BUFFER_SLOT) {
                         *found = slot;
                     } else if (mCore->mAllowAllocation) {
@@ -380,6 +415,9 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
                                             uint32_t width, uint32_t height, PixelFormat format,
                                             uint64_t usage, uint64_t* outBufferAge,
                                             FrameEventHistoryDelta* outTimestamps) {
+    bool need_afbc = 0;   
+    bool isfb = 0;                                            
+    
     ATRACE_CALL();
     { // Autolock scope
         std::lock_guard<std::mutex> lock(mCore->mMutex);
@@ -426,7 +464,22 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
 
         // Enable the usage bits the consumer requested
         usage |= mCore->mConsumerUsageBits;
-
+        #if DYNAMIC_AFBC_TARGET
+        if((usage & GRALLOC_USAGE_HW_FB) )
+        {
+            isfb = 1;
+            if(usage & GRALLOC_USAGE_PRIVATE_0)
+            {
+                usage &= ~GRALLOC_USAGE_PRIVATE_0;
+                need_afbc = 1;   
+                ALOGD("rk-debug-gui need afbc fb-target");                
+            }
+            else  
+            {
+                ALOGD("rk-debug-gui no need afbc fb-target");                                
+            }
+        }
+        #endif
         const bool useDefaultSize = !width && !height;
         if (useDefaultSize) {
             width = mCore->mDefaultWidth;
@@ -439,7 +492,7 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
 
         int found = BufferItem::INVALID_BUFFER_SLOT;
         while (found == BufferItem::INVALID_BUFFER_SLOT) {
-            status_t status = waitForFreeSlotThenRelock(FreeSlotCaller::Dequeue, lock, &found);
+            status_t status = waitForFreeSlotThenRelock(FreeSlotCaller::Dequeue, lock, &found,need_afbc,isfb);
             if (status != NO_ERROR) {
                 return status;
             }
@@ -603,10 +656,10 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
         eglDestroySyncKHR(eglDisplay, eglFence);
     }
 
-    BQ_LOGV("dequeueBuffer: returning slot=%d/%" PRIu64 " buf=%p flags=%#x",
+    BQ_LOGV("dequeueBuffer: returning slot=%d/%" PRIu64 " buf=%p flags=%#x,afbc=%d",
             *outSlot,
             mSlots[*outSlot].mFrameNumber,
-            mSlots[*outSlot].mGraphicBuffer->handle, returnFlags);
+            mSlots[*outSlot].mGraphicBuffer->handle, returnFlags,mSlots[*outSlot].mIsafbc);
 
     if (outBufferAge) {
         *outBufferAge = mCore->mBufferAge;
@@ -772,7 +825,7 @@ status_t BufferQueueProducer::attachBuffer(int* outSlot,
 
     status_t returnFlags = NO_ERROR;
     int found;
-    status_t status = waitForFreeSlotThenRelock(FreeSlotCaller::Attach, lock, &found);
+    status_t status = waitForFreeSlotThenRelock(FreeSlotCaller::Attach, lock, &found,0,0);
     if (status != NO_ERROR) {
         return status;
     }
@@ -1398,7 +1451,7 @@ status_t BufferQueueProducer::setSidebandStream(const sp<NativeHandle>& stream) 
 void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
         PixelFormat format, uint64_t usage) {
     ATRACE_CALL();
-
+    int static fb_cnt = 0;
     const bool useDefaultSize = !width && !height;
     while (true) {
         size_t newBufferCount = 0;
@@ -1455,6 +1508,8 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
                 return;
             }
             buffers.push_back(graphicBuffer);
+            if(allocUsage & GRALLOC_USAGE_HW_FB)
+                fb_cnt ++;
         }
 
         { // Autolock scope
@@ -1488,7 +1543,11 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
                 mCore->clearBufferSlotLocked(*slot); // Clean up the slot first
                 mSlots[*slot].mGraphicBuffer = buffers[i];
                 mSlots[*slot].mFence = Fence::NO_FENCE;
-
+                mSlots[*slot].mIsafbc = false;
+                if(fb_cnt <= 3)
+                {
+                    mSlots[*slot].mIsafbc = true;
+                }
                 // freeBufferLocked puts this slot on the free slots list. Since
                 // we then attached a buffer, move the slot to free buffer list.
                 mCore->mFreeBuffers.push_front(*slot);

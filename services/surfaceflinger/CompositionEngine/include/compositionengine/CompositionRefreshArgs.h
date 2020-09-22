@@ -77,6 +77,9 @@ struct CompositionRefreshArgs {
     // If true, client composition is always used.
     bool devOptForceClientComposition{false};
 
+    // If true, afbc Composition
+    bool useAfbcTargetComposition{false};
+
     // If set, causes the dirty regions to flash with the delay
     std::optional<std::chrono::microseconds> devOptFlashDirtyRegionsDelay;
 };

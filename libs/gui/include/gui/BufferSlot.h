@@ -230,6 +230,7 @@ struct BufferSlot {
     // producer. If so, it needs to set the BUFFER_NEEDS_REALLOCATION flag when
     // dequeued to prevent the producer from using a stale cached buffer.
     bool mNeedsReallocation;
+    bool mIsafbc;
 };
 
 } // namespace android

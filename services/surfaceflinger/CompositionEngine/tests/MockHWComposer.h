@@ -61,6 +61,7 @@ public:
     MOCK_METHOD2(setColorTransform, status_t(DisplayId, const mat4&));
     MOCK_METHOD1(disconnectDisplay, void(DisplayId));
     MOCK_CONST_METHOD1(hasDeviceComposition, bool(const std::optional<DisplayId>&));
+    MOCK_CONST_METHOD1(hasClientAFBC, bool(const std::optional<DisplayId>&));
     MOCK_CONST_METHOD1(getPresentFence, sp<Fence>(DisplayId));
     MOCK_CONST_METHOD2(getLayerReleaseFence, sp<Fence>(DisplayId, HWC2::Layer*));
     MOCK_METHOD3(setOutputBuffer, status_t(DisplayId, const sp<Fence>&, const sp<GraphicBuffer>&));

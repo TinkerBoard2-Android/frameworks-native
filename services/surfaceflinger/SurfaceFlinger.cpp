@@ -334,8 +334,11 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
     // Vr flinger is only enabled on Daydream ready devices.
     useVrFlinger = use_vr_flinger(false);
 
+    #if DYNAMIC_AFBC_TARGET
+    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(6);
+    #else
     maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(2);
-
+    #endif
     maxGraphicsWidth = std::max(max_graphics_width(0), 0);
     maxGraphicsHeight = std::max(max_graphics_height(0), 0);
 
@@ -2083,7 +2086,14 @@ void SurfaceFlinger::onMessageRefresh() {
         refreshArgs.devOptFlashDirtyRegionsDelay =
                 std::chrono::milliseconds(mDebugRegion > 1 ? mDebugRegion : 0);
     }
+    const auto* dpy = ON_MAIN_THREAD(getDefaultDisplayDeviceLocked()).get();
 
+    if(dpy)
+        refreshArgs.useAfbcTargetComposition =  getHwComposer().hasClientAFBC(*dpy->getId());
+    else
+        refreshArgs.useAfbcTargetComposition =  false;
+
+    ALOGD("rk-debug-sf useAfbcTargetComposition=%d",refreshArgs.useAfbcTargetComposition);    
     mGeometryInvalid = false;
 
     // Store the present time just before calling to the composition engine so we could notify
