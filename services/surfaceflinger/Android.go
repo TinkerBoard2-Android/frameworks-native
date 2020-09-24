@@ -3,7 +3,7 @@ package libsurfaceflinger
 import (
         "android/soong/android"
         "android/soong/cc"
-        "fmt"
+        //"fmt"
         "strings"
 )
 
@@ -32,7 +32,7 @@ func Defaults(ctx android.LoadHookContext) {
 //条件编译主要修改函数
 func globalDefaults(ctx android.BaseContext) ([]string) {
 	var cflags []string
-	fmt.Println("BOARD_HS_DYNAMIC_AFBC_TARGET_SF:",ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET")) 
+	//fmt.Println("BOARD_HS_DYNAMIC_AFBC_TARGET_SF:",ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET")) 
 	
 	
     if (strings.EqualFold(ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET"),"true")) {
