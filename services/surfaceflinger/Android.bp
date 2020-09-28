@@ -57,6 +57,7 @@ cc_defaults {
         "libinput",
         "libutils",
         "libSurfaceFlingerProp",
+        "libgraphicpolicy",
     ],
     // VrComposer is not used when building surfaceflinger for vendors
     target: {

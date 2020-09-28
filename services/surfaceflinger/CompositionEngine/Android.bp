@@ -24,6 +24,7 @@ cc_defaults {
         "libtimestats",
         "libui",
         "libutils",
+        "libgraphicpolicy",
     ],
     static_libs: [
         "libmath",
@@ -36,6 +37,9 @@ cc_defaults {
         "android.hardware.graphics.composer@2.3-command-buffer",
         "android.hardware.graphics.composer@2.4-command-buffer",
         "libsurfaceflinger_headers",
+    ],
+    include_dirs: [
+        "hardware/rockchip/libgraphicpolicy",
     ],
 }
 

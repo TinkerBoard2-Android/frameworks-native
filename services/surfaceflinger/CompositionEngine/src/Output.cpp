@@ -44,6 +44,9 @@
 #include <gui/Surface.h>
 #include "TracedOrdinal.h"
 
+#include <cutils/properties.h>
+#include "graphicpolicy.h"
+
 namespace android::compositionengine {
 
 Output::~Output() = default;
@@ -978,6 +981,15 @@ std::vector<LayerFE::LayerSettings> Output::generateClientCompositionRequests(
             ALOGV("  Skipping for empty clip");
             firstLayer = false;
             continue;
+        }
+
+        if(graphic_policy(GPID_SF_NODRAW)) {
+            char value[PROPERTY_VALUE_MAX];
+            property_get("sys.sf.nodraw", value, "nodraw");
+            if(strstr(layerFE.getDebugName(),value)) {
+                ALOGD("debug-sf: nodraw layer:%s \n",layerFE.getDebugName());
+                continue;
+            }
         }
 
         const bool clientComposition = layer->requiresClientComposition();
