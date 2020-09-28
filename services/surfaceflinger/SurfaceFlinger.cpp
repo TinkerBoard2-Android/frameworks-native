@@ -339,6 +339,7 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
     #else
     maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(2);
     #endif
+
     maxGraphicsWidth = std::max(max_graphics_width(0), 0);
     maxGraphicsHeight = std::max(max_graphics_height(0), 0);
 
@@ -2088,12 +2089,12 @@ void SurfaceFlinger::onMessageRefresh() {
     }
     const auto* dpy = ON_MAIN_THREAD(getDefaultDisplayDeviceLocked()).get();
 
-    if(dpy)
+    if(dpy) {
         refreshArgs.useAfbcTargetComposition =  getHwComposer().hasClientAFBC(*dpy->getId());
-    else
+    } else {
         refreshArgs.useAfbcTargetComposition =  false;
+    }
 
-    ALOGD("rk-debug-sf useAfbcTargetComposition=%d",refreshArgs.useAfbcTargetComposition);    
     mGeometryInvalid = false;
 
     // Store the present time just before calling to the composition engine so we could notify

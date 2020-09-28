@@ -497,7 +497,7 @@ status_t HWComposer::getDeviceCompositionChanges(
 
     uint32_t numTypes = 0;
     uint32_t numRequests = 0;
-	static int framecnt = 0;
+    static int framecnt = 0;
     hal::Error error = hal::Error::NONE;
 
     // First try to skip validate altogether when there is no client
@@ -540,12 +540,12 @@ status_t HWComposer::getDeviceCompositionChanges(
     layerRequests.reserve(numRequests);
     error = hwcDisplay->getRequests(&displayRequests, &layerRequests);
     RETURN_IF_HWC_ERROR_FOR("getRequests", error, displayId, BAD_INDEX);
-	displayData.hasClientafbc = false;
-	framecnt ++;
+    displayData.hasClientafbc = false;
+    framecnt ++;
 
- 	if (0 == framecnt%2)
+    if (0 == framecnt%2)
     {
-    	displayData.hasClientafbc = true;
+        displayData.hasClientafbc = true;
     }
     DeviceRequestedChanges::ClientTargetProperty clientTargetProperty;
     error = hwcDisplay->getClientTargetProperty(&clientTargetProperty);
