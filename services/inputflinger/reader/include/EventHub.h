@@ -119,6 +119,9 @@ enum {
     /* The input device has a rotary encoder */
     INPUT_DEVICE_CLASS_ROTARY_ENCODER = 0x00001000,
 
+    /* The input device has a mouse. */
+    INPUT_DEVICE_CLASS_KEYMOUSE       = 0x00004000,
+
     /* The input device is virtual (not a real device, not part of UI configuration). */
     INPUT_DEVICE_CLASS_VIRTUAL = 0x40000000,
 

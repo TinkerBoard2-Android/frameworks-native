@@ -17,6 +17,7 @@
 #include "../Macros.h"
 
 #include "KeyboardInputMapper.h"
+#include <cutils/properties.h>
 
 namespace android {
 
@@ -278,8 +279,28 @@ void KeyboardInputMapper::processKey(nsecs_t when, bool down, int32_t scanCode, 
         keyMetaState = mMetaState;
         policyFlags = 0;
     }
-
+    // Support simulate mouse function.
+    if (policyFlags & POLICY_FLAG_GESTURE) {
+        getDeviceContext().cancelTouch(when);
+    }
+    char mKeyMouseState[PROPERTY_VALUE_MAX] = "";
+    property_get("sys.KeyMouse.mKeyMouseState", mKeyMouseState, "off");
+    char mID[PROPERTY_VALUE_MAX] = "";
+    sprintf(mID,"%d",getDeviceId());
+    property_set("sys.ID.mID",mID);
     if (down) {
+        if (keyCode == AKEYCODE_PROFILE_SWITCH) {
+            char targetProduct[PROPERTY_VALUE_MAX] = "";
+            property_get("ro.target.product", targetProduct, "");
+            if (strcmp(targetProduct, "box") == 0) {
+                if (strcmp(mKeyMouseState, "on")==0) {
+                    property_set("sys.KeyMouse.mKeyMouseState", "off");
+                } else if (strcmp(mKeyMouseState,"off")==0) {
+                    property_set("sys.KeyMouse.mKeyMouseState","on");
+                }
+            }
+        }
+
         // Rotate key codes according to orientation if needed.
         if (mParameters.orientationAware) {
             keyCode = rotateKeyCode(keyCode, getOrientation());
@@ -347,7 +368,21 @@ void KeyboardInputMapper::processKey(nsecs_t when, bool down, int32_t scanCode, 
     if (mParameters.handlesKeyRepeat) {
         policyFlags |= POLICY_FLAG_DISABLE_KEY_REPEAT;
     }
-
+    if (down && !isMetaKey(keyCode)) {
+        getContext()->fadePointer();
+    }
+    //
+    if (strcmp(mKeyMouseState, "on") == 0) {
+        if(keyCode == AKEYCODE_DPAD_LEFT) {
+            keyCode = AKEYCODE_SYSTEM_NAVIGATION_LEFT;
+        } else if (keyCode == AKEYCODE_DPAD_RIGHT) {
+            keyCode = AKEYCODE_SYSTEM_NAVIGATION_RIGHT;
+        } else if (keyCode == AKEYCODE_DPAD_UP) {
+            keyCode = AKEYCODE_SYSTEM_NAVIGATION_UP;
+        } else if (keyCode == AKEYCODE_DPAD_DOWN) {
+            keyCode = AKEYCODE_SYSTEM_NAVIGATION_DOWN;
+        }
+    }
     NotifyKeyArgs args(getContext()->getNextId(), when, getDeviceId(), mSource, getDisplayId(),
                        policyFlags, down ? AKEY_EVENT_ACTION_DOWN : AKEY_EVENT_ACTION_UP,
                        AKEY_EVENT_FLAG_FROM_SYSTEM, keyCode, scanCode, keyMetaState, downTime);

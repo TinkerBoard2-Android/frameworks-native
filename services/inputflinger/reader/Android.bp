@@ -35,6 +35,7 @@ filegroup {
         "mapper/InputMapper.cpp",
         "mapper/JoystickInputMapper.cpp",
         "mapper/KeyboardInputMapper.cpp",
+        "mapper/KeyMouseInputMapper.cpp",
         "mapper/MultiTouchInputMapper.cpp",
         "mapper/RotaryEncoderInputMapper.cpp",
         "mapper/SingleTouchInputMapper.cpp",
