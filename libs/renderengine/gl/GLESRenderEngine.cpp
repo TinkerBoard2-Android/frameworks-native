@@ -992,9 +992,12 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
     }
 
     if (bufferFence.get() >= 0) {
+#if !MALI_PRODUCT_ID_450 && !MALI_PRODUCT_ID_400
         // Duplicate the fence for passing to waitFence.
         base::unique_fd bufferFenceDup(dup(bufferFence.get()));
-        if (bufferFenceDup < 0 || !waitFence(std::move(bufferFenceDup))) {
+        if (bufferFenceDup < 0 || !waitFence(std::move(bufferFenceDup)))
+#endif
+        {
             ATRACE_NAME("Waiting before draw");
             sync_wait(bufferFence.get(), -1);
         }
