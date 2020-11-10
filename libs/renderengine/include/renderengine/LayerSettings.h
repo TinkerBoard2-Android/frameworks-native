@@ -46,6 +46,9 @@ struct Buffer {
     // TODO(alecmouri): This is GL-specific...make the type backend-agnostic.
     uint32_t textureName = 0;
 
+    //rk_ext: add currentcrop for 10bit to 8bit
+    Rect currentcrop;
+
     // Whether to use filtering when rendering the texture.
     bool useTextureFiltering = false;
 
