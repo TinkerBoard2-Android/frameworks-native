@@ -384,6 +384,11 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
     // debugging stuff...
     char value[PROPERTY_VALUE_MAX];
 
+#if RK_FPS
+    property_get("debug.sf.fps", value, "0");
+    mDebugFPS = atoi(value);
+#endif
+
     property_get("ro.bq.gpu_to_cpu_unsupported", value, "0");
     mGpuToCpuSupported = !atoi(value);
 
@@ -791,6 +796,26 @@ size_t SurfaceFlinger::getMaxTextureSize() const {
 size_t SurfaceFlinger::getMaxViewportDims() const {
     return getRenderEngine().getMaxViewportDims();
 }
+
+#if RK_FPS
+void SurfaceFlinger::debugShowFPS() const
+{
+    static int mFrameCount;
+    static int mLastFrameCount = 0;
+    static nsecs_t mLastFpsTime = 0;
+    static float mFps = 0;
+
+    mFrameCount++;
+    nsecs_t now = systemTime();
+    nsecs_t diff = now - mLastFpsTime;
+    if (diff > ms2ns(500)) {
+        mFps =  ((mFrameCount - mLastFrameCount) * float(s2ns(1))) / diff;
+        mLastFpsTime = now;
+        mLastFrameCount = mFrameCount;
+        ALOGD("mFrameCount = %d mFps = %2.3f",mFrameCount, mFps);
+    }
+}
+#endif
 
 // ----------------------------------------------------------------------------
 
@@ -2043,6 +2068,10 @@ bool SurfaceFlinger::handleMessageTransaction() {
     return runHandleTransaction;
 }
 
+#if RK_FPS
+static int gsFrameCcount = 0;
+#endif
+
 void SurfaceFlinger::onMessageRefresh() {
     ATRACE_CALL();
 
@@ -2133,8 +2162,20 @@ void SurfaceFlinger::onMessageRefresh() {
     }
 
     mVSyncModulator->onRefreshed(mHadClientComposition);
-
     mLayersWithQueuedFrames.clear();
+
+#if RK_FPS
+    if(gsFrameCcount++%300==0) {
+        gsFrameCcount = 1;
+        char value[PROPERTY_VALUE_MAX];
+        property_get("debug.sf.fps", value, "0");
+        mDebugFPS = atoi(value);
+    }
+
+    if (mDebugFPS > 0)
+        debugShowFPS();
+#endif
+
     if (mVisibleRegionsDirty) {
         mVisibleRegionsDirty = false;
         if (mTracingEnabled && mAddCompositionStateToTrace) {
