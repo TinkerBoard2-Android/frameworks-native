@@ -261,8 +261,6 @@ std::optional<compositionengine::LayerFE::LayerSettings> BufferLayer::prepareCli
             mat4::translate(vec4(-.5, -.5, 0, 1)) *
             mat4::translate(vec4(translateX, translateY, 0, 1)) *
             mat4::scale(vec4(scaleWidth, scaleHeight, 1.0, 1.0));
-    //rk_ext: Deliver to GLESRenderEngine for 10bit to 8bit
-    layer.source.buffer.currentcrop = mBufferInfo.mCrop;
 
     layer.source.buffer.useTextureFiltering = useFiltering;
     layer.source.buffer.textureTransform = mat4(static_cast<const float*>(textureMatrix)) * tr;

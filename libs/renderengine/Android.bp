@@ -31,9 +31,6 @@ cc_defaults {
         "libui",
         "libutils",
     ],
-    include_dirs:[
-        "hardware/rockchip/librga",
-    ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
 }
