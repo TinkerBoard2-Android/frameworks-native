@@ -5857,7 +5857,31 @@ void SurfaceFlinger::renderScreenImplLocked(const RenderArea& renderArea,
     // buffer bounds.
     clientCompositionDisplay.physicalDisplay = Rect(reqWidth, reqHeight);
     clientCompositionDisplay.clip = sourceCrop;
-    clientCompositionDisplay.orientation = rotation;
+
+    //we need consider internalDisplayOrientation when renderScreenImpl
+    //clientCompositionDisplay.orientation = rotation;
+    android::ui::Rotation r = android::ui::ROTATION_0;
+
+    switch (rotation) {
+        case ui::Transform::ROT_0:
+            r =  android::ui::ROTATION_0;
+            break;
+        case ui::Transform::ROT_90:
+            r =  android::ui::ROTATION_90;
+            break;
+        case ui::Transform::ROT_180:
+            r =  android::ui::ROTATION_180;
+            break;
+        case ui::Transform::ROT_270:
+            r =  android::ui::ROTATION_270;
+            break;
+        default:
+            r = android::ui::ROTATION_0;
+            break;
+    }
+
+    android::ui::Rotation new_orientation = (android::ui::Rotation)(((int)r + (int)internalDisplayOrientation) % 4);
+    clientCompositionDisplay.orientation = ui::Transform::toRotationFlags(new_orientation);
 
     clientCompositionDisplay.outputDataspace = renderArea.getReqDataSpace();
     clientCompositionDisplay.maxLuminance = DisplayDevice::sDefaultMaxLumiance;
