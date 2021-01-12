@@ -48,6 +48,9 @@
 namespace android {
 // ----------------------------------------------------------------------------
 
+/* SurfaceFlinger cannot simply include './src/mali_gralloc_usages.h', so a copy is defined. */
+#define RK_GRALLOC_USAGE_EXTERNAL_DISP (1ULL << 55)
+
 using ui::Dataspace;
 
 /*
@@ -74,9 +77,27 @@ FramebufferSurface::FramebufferSurface(HWComposer& hwc, DisplayId displayId,
 
     mName = "FramebufferSurface";
     mConsumer->setConsumerName(mName);
-    mConsumer->setConsumerUsageBits(GRALLOC_USAGE_HW_FB |
-                                       GRALLOC_USAGE_HW_RENDER |
-                                       GRALLOC_USAGE_HW_COMPOSER);
+
+    /* modify usage for rockchip afbc layer select
+     * When the external display of the chip platform
+     * does not support afbc, configure
+     * RK_GRALLOC_USAGE_EXTERNAL_DISP/GRALLOC_USAGE__RK_EXT__EXTERNAL_DISP
+     * to gralloc. */
+    uint64_t flags = GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_RENDER |
+                     GRALLOC_USAGE_HW_COMPOSER;
+#if DISABLE_EXTERNAL_DISP_AFBC
+    if ((displayId.value & 0xff) != LEGACY_DISPLAY_TYPE_PRIMARY) {
+        /* Through this usage, gralloc will disable AFBC on the external display. */
+#if USE_GRALLOC_4
+        flags |= RK_GRALLOC_USAGE_EXTERNAL_DISP;
+#else
+        flags |= GRALLOC_USAGE__RK_EXT__EXTERNAL_DISP;
+#endif
+    }
+#endif
+
+    mConsumer->setConsumerUsageBits(flags);
+
     const auto& activeConfig = mHwc.getActiveConfig(displayId);
     ui::Size limitedSize =
             limitFramebufferSize(activeConfig->getWidth(), activeConfig->getHeight());

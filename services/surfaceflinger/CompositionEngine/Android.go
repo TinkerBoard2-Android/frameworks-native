@@ -38,6 +38,14 @@ func globalDefaults(ctx android.BaseContext) ([]string) {
         cflags = append(cflags,"-DDYNAMIC_AFBC_TARGET=1")
     }
 
+    if (!strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk356x")) {
+        cflags = append(cflags,"-DDISABLE_EXTERNAL_DISP_AFBC=1")
+    }
+
+    if (strings.EqualFold(ctx.AConfig().Getenv("TARGET_RK_GRALLOC_VERSION"),"4") ) {
+        cflags = append(cflags,"-DUSE_GRALLOC_4=1")
+    }
+
     //将需要区分的环境变量在此区域添加 //....
     return cflags
 }
