@@ -60,6 +60,7 @@ struct DisplaySettings {
     // capture of a device in landscape while the buffer is in portrait
     // orientation.
     uint32_t orientation = ui::Transform::ROT_0;
+    int display_id = -1;
 };
 
 static inline bool operator==(const DisplaySettings& lhs, const DisplaySettings& rhs) {

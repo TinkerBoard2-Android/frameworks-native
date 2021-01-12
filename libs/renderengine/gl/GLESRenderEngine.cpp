@@ -51,6 +51,8 @@
 #include "ProgramCache.h"
 #include "filters/BlurFilter.h"
 
+#include "graphicpolicy.h"
+
 #if RK_NV12_10_TO_NV12_BY_RGA
 #define UN_NEED_GL
 #include <include/RockchipRga.h>
@@ -355,6 +357,40 @@ EGLConfig GLESRenderEngine::chooseEglConfig(EGLDisplay display, int format, bool
     return config;
 }
 
+static int mirror_display_id = 0;
+static int need_mirror_X = 0;
+static int need_mirror_Y = 0;
+
+#define PROP_SF_MIRROR_DISPLAYID "persist.sf.mirror.displayid"
+#define PROP_SF_MIRROR_X "persist.sf.mirror.x"
+#define PROP_SF_MIRROR_Y "persist.sf.mirror.y"
+
+mat4 mirrorX = {-1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+mat4 mirrorY = {1,0,0,0, 0,-1,0,0, 0,0,1,0, 0,0,0,1};
+
+void sf_mirror(int display_id,Description * pmState)
+{
+    if(graphic_policy(GPID_SF_MIRROR)) {
+
+        if(display_id == mirror_display_id && need_mirror_X){
+            pmState->projectionMatrix = mirrorX * pmState->projectionMatrix ;
+        }
+        if(display_id == mirror_display_id && need_mirror_Y){
+            pmState->projectionMatrix = mirrorY * pmState->projectionMatrix ;
+        }
+    }
+
+    //debug sf-mirror
+    //ALOGD("sf-mirror display_id:%d --------\n",display_id);
+    //const float * ppm =  pmState->projectionMatrix.asArray();
+    //for(int i = 0 ; i < 4; i++)
+    //{
+    //   ALOGD("sf-mirror ppm = %f %f %f %f\n",*ppm,*(ppm+1),*(ppm+2),*(ppm+3));
+    //   ppm += 4;
+    //}
+
+}
+
 GLESRenderEngine::GLESRenderEngine(const RenderEngineCreationArgs& args, EGLDisplay display,
                                    EGLConfig config, EGLContext ctxt, EGLSurface dummy,
                                    EGLContext protectedContext, EGLSurface protectedDummy)
@@ -374,6 +410,17 @@ GLESRenderEngine::GLESRenderEngine(const RenderEngineCreationArgs& args, EGLDisp
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     glPixelStorei(GL_PACK_ALIGNMENT, 4);
+
+    //rk-ext sf gpu-compose mirror init
+    char propMirrorBuf[PROPERTY_VALUE_MAX];
+    property_get(PROP_SF_MIRROR_DISPLAYID, propMirrorBuf, "0");
+    mirror_display_id = atoi(propMirrorBuf);
+    property_get(PROP_SF_MIRROR_X, propMirrorBuf, "0");
+    need_mirror_X = atoi(propMirrorBuf);
+    property_get(PROP_SF_MIRROR_Y, propMirrorBuf, "0");
+    need_mirror_Y = atoi(propMirrorBuf);
+    ALOGI("sf-mirror config displayid:%d x:%d y:%d\n",mirror_display_id,need_mirror_X,need_mirror_Y);
+
 
     // Initialize protected EGL Context.
     if (mProtectedEGLContext != EGL_NO_CONTEXT) {
@@ -1227,6 +1274,7 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
         mState.maxMasteringLuminance = layer->source.buffer.maxMasteringLuminance;
         mState.maxContentLuminance = layer->source.buffer.maxContentLuminance;
         mState.projectionMatrix = projectionMatrix * layer->geometry.positionTransform;
+        sf_mirror(display.display_id, &mState);
 
         const FloatRect bounds = layer->geometry.boundaries;
         Mesh::VertexArray<vec2> position(mesh.getPositionArray<vec2>());

@@ -33,6 +33,7 @@ cc_defaults {
     ],
     include_dirs:[
         "hardware/rockchip/librga",
+        "hardware/rockchip/libgraphicpolicy",
     ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
