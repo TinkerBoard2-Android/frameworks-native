@@ -1301,8 +1301,9 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
                 //Rect CurrentCrop(0,0,3840,2160);
                 Rect CurrentCrop(layer->source.buffer.currentcrop);
 #if RK_HDR
-                const int yuvTexUsage = GraphicBuffer::USAGE_HW_TEXTURE | GRALLOC_USAGE_TO_USE_ARM_P010;
-                const int yuvTexFormat = HAL_PIXEL_FORMAT_YCrCb_NV12_10;
+                const int yuvTexUsage = GraphicBuffer::USAGE_HW_TEXTURE;
+                const int yuvTexFormat = HAL_PIXEL_FORMAT_YCBCR_P010;
+                const int dstPixelByte = 2;
 #elif (RK_NV12_10_TO_NV12_BY_NENO | RK_NV12_10_TO_NV12_BY_RGA)
                 const int yuvTexUsage = GraphicBuffer::USAGE_HW_TEXTURE /*| HDRUSAGE*/;
                 //GraphicBuffer::USAGE_SW_WRITE_RARELY;
@@ -1321,8 +1322,8 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
                 src_t = CurrentCrop.top;
                 src_r = CurrentCrop.right;
                 src_b = CurrentCrop.bottom;
-                src_stride = gBuf->getStride();
                 uint32_t w = src_r - src_l;
+                src_stride = w*1.25+64;
 #elif RK_NV12_10_TO_NV12_BY_RGA
                 //Since rga cann't support scalet to bigger than 4096 limit to 4096
                 uint32_t w = (CurrentCrop.getWidth() + 31) & (~31);
@@ -1336,12 +1337,13 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
                 }
                 if(yuvTeximg[yuvIndex].yuvTexBuffer == NULL)
                 {
+                    ALOGD("sf new GraphicBuffer w:%d h:%d f:0x%x u:0x%x\n",w, gBuf->getHeight(),yuvTexFormat, yuvTexUsage);
                     yuvTeximg[yuvIndex].yuvTexBuffer = new GraphicBuffer(w, gBuf->getHeight(),yuvTexFormat, yuvTexUsage);
                 }
 
 #if (RK_HDR | RK_NV12_10_TO_NV12_BY_NENO)
                 gBuf->lock(GRALLOC_USAGE_SW_READ_OFTEN,&src_vaddr);
-                yuvTeximg[yuvIndex].yuvTexBuffer->lock(GRALLOC_USAGE_SW_WRITE_OFTEN,&dst_vaddr);
+                yuvTeximg[yuvIndex].yuvTexBuffer->lock(GRALLOC_USAGE_SW_WRITE_OFTEN|GRALLOC_USAGE_SW_READ_OFTEN,&dst_vaddr);
 
                 //PRINT_TIME_START
                 if(dso == NULL)
@@ -1362,10 +1364,10 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
                 }
                 /* align w to 64 */
                 w = ALIGN(w, 64);
-                ALOGD("DEBUG_lb Stride=%d",yuvTeximg[yuvIndex].yuvTexBuffer->getStride());
-                if(w <= yuvTeximg[yuvIndex].yuvTexBuffer->getStride()/2)
+                ALOGD("DEBUG_lb Stride=%d w=%d  src_stride:%d \n",yuvTeximg[yuvIndex].yuvTexBuffer->getStride(), w, gBuf->getStride());
+                if(w <= w*dstPixelByte/2)
                 {
-                    rockchipxxx((u8*)src_vaddr, (u8*)dst_vaddr, w, yuvTeximg[yuvIndex].yuvTexBuffer->getHeight(), src_stride, yuvTeximg[yuvIndex].yuvTexBuffer->getStride(), 0);
+                    rockchipxxx((u8*)src_vaddr, (u8*)dst_vaddr, w, yuvTeximg[yuvIndex].yuvTexBuffer->getHeight(), src_stride, w*dstPixelByte, 0);
                 }else
                     ALOGE("%s(%d):unsupport resolution for 4k", __FUNCTION__, __LINE__);
 #elif RK_NV12_10_TO_NV12_BY_NENO
@@ -1377,42 +1379,18 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
                     dlclose(dso);
                     return BAD_VALUE;
                 }
-                rockchipxxx3288((u8*)src_vaddr, (u8*)dst_vaddr, w, yuvTeximg[yuvIndex].yuvTexBuffer->getHeight(), src_stride, (src_r - src_l), 0);
+                rockchipxxx3288((u8*)src_vaddr, (u8*)dst_vaddr, w, yuvTeximg[yuvIndex].yuvTexBuffer->getHeight(), src_stride, w, 0);
 #endif
                 //PRINT_TIME_END("convert10to16_highbit_arm64_neon")
                 ALOGD("src_vaddr=%p,dst_vaddr=%p,crop_w=%d,crop_h=%d,stride=%f, src_stride=%d,raw_w=%d,raw_h=%d",
                         src_vaddr, dst_vaddr, src_r - src_l,src_b - src_t,
                         (src_r - src_l)*1.25+64,src_stride,gBuf->getWidth(),gBuf->getHeight());
-                //dump data
-                static int i =0;
-                char pro_value[PROPERTY_VALUE_MAX];
-
-                property_get("sys.dump_out_neon",pro_value,0);
-                if(i<10 && !strcmp(pro_value,"true"))
-                {
-                    char data_name[100];
-
-                    sprintf(data_name,"/data/dump/dmlayer%d_%d_%d.bin", i,
-                            yuvTeximg[yuvIndex].yuvTexBuffer->getWidth(),yuvTeximg[yuvIndex].yuvTexBuffer->getHeight());
-#if RK_HDR
-                    int n = yuvTeximg[yuvIndex].yuvTexBuffer->getHeight() * yuvTeximg[yuvIndex].yuvTexBuffer->getStride();
-#else
-                    int n = yuvTeximg[yuvIndex].yuvTexBuffer->getHeight() * yuvTeximg[yuvIndex].yuvTexBuffer->getStride() * 1.5;
-#endif
-                    ALOGD("dump %s size=%d", data_name, n );
-                    FILE *fp;
-                    if ((fp = fopen(data_name, "w+")) == NULL)
-                    {
-                        printf("can't open output.bin!!!!!\n");
-                    }
-                    fwrite(dst_vaddr, n, 1, fp);
-                    fclose(fp);
-                    i++;
-                }
 
 #elif RK_NV12_10_TO_NV12_BY_RGA
                 rgaCopyBit(gBuf, yuvTeximg[yuvIndex].yuvTexBuffer, CurrentCrop);
 #endif
+            gBuf->unlock();
+            yuvTeximg[yuvIndex].yuvTexBuffer->unlock();
             bindExternalTextureBuffer(layer->source.buffer.textureName,
                             yuvTeximg[yuvIndex].yuvTexBuffer, layer->source.buffer.fence);
 
