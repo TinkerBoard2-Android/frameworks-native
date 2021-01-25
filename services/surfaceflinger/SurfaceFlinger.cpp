@@ -334,11 +334,7 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
     // Vr flinger is only enabled on Daydream ready devices.
     useVrFlinger = use_vr_flinger(false);
 
-    #if DYNAMIC_AFBC_TARGET
-    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(6);
-    #else
-    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(3);
-    #endif
+    maxFrameBufferAcquiredBuffers = max_frame_buffer_acquired_buffers(2);
 
     maxGraphicsWidth = std::max(max_graphics_width(0), 0);
     maxGraphicsHeight = std::max(max_graphics_height(0), 0);
@@ -383,11 +379,6 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
 
     // debugging stuff...
     char value[PROPERTY_VALUE_MAX];
-
-#if RK_FPS
-    property_get("debug.sf.fps", value, "0");
-    mDebugFPS = atoi(value);
-#endif
 
     property_get("ro.bq.gpu_to_cpu_unsupported", value, "0");
     mGpuToCpuSupported = !atoi(value);
@@ -796,26 +787,6 @@ size_t SurfaceFlinger::getMaxTextureSize() const {
 size_t SurfaceFlinger::getMaxViewportDims() const {
     return getRenderEngine().getMaxViewportDims();
 }
-
-#if RK_FPS
-void SurfaceFlinger::debugShowFPS() const
-{
-    static int mFrameCount;
-    static int mLastFrameCount = 0;
-    static nsecs_t mLastFpsTime = 0;
-    static float mFps = 0;
-
-    mFrameCount++;
-    nsecs_t now = systemTime();
-    nsecs_t diff = now - mLastFpsTime;
-    if (diff > ms2ns(500)) {
-        mFps =  ((mFrameCount - mLastFrameCount) * float(s2ns(1))) / diff;
-        mLastFpsTime = now;
-        mLastFrameCount = mFrameCount;
-        ALOGD("mFrameCount = %d mFps = %2.3f",mFrameCount, mFps);
-    }
-}
-#endif
 
 // ----------------------------------------------------------------------------
 
@@ -1595,7 +1566,7 @@ void SurfaceFlinger::signalRefresh() {
     mEventQueue->refresh();
 }
 
-nsecs_t SurfaceFlinger::getVsyncPeriod() const {
+nsecs_t SurfaceFlinger::getVsyncPeriodFromHWC() const {
     const auto displayId = getInternalDisplayIdLocked();
     if (!displayId || !getHwComposer().isConnected(*displayId)) {
         return 0;
@@ -1802,7 +1773,7 @@ void SurfaceFlinger::updateVrFlinger() {
     setPowerModeInternal(display, currentDisplayPowerMode);
 
     // Reset the timing values to account for the period of the swapped in HWC
-    const nsecs_t vsyncPeriod = getVsyncPeriod();
+    const nsecs_t vsyncPeriod = mRefreshRateConfigs->getCurrentRefreshRate().getVsyncPeriod();
     mAnimFrameTracker.setDisplayRefreshPeriod(vsyncPeriod);
 
     // The present fences returned from vr_hwc are not an accurate
@@ -2068,10 +2039,6 @@ bool SurfaceFlinger::handleMessageTransaction() {
     return runHandleTransaction;
 }
 
-#if RK_FPS
-static int gsFrameCcount = 0;
-#endif
-
 void SurfaceFlinger::onMessageRefresh() {
     ATRACE_CALL();
 
@@ -2116,13 +2083,6 @@ void SurfaceFlinger::onMessageRefresh() {
         refreshArgs.devOptFlashDirtyRegionsDelay =
                 std::chrono::milliseconds(mDebugRegion > 1 ? mDebugRegion : 0);
     }
-    const auto* dpy = ON_MAIN_THREAD(getDefaultDisplayDeviceLocked()).get();
-
-    if(dpy) {
-        refreshArgs.useAfbcTargetComposition =  getHwComposer().hasClientAFBC(*dpy->getId());
-    } else {
-        refreshArgs.useAfbcTargetComposition =  false;
-    }
 
     mGeometryInvalid = false;
 
@@ -2161,9 +2121,10 @@ void SurfaceFlinger::onMessageRefresh() {
         mTimeStats->incrementCompositionStrategyChanges();
     }
 
-    mVSyncModulator->onRefreshed(mHadClientComposition);
-    mLayersWithQueuedFrames.clear();
+    // TODO: b/160583065 Enable skip validation when SF caches all client composition layers
+    mVSyncModulator->onRefreshed(mHadClientComposition || mReusedClientComposition);
 
+    mLayersWithQueuedFrames.clear();
 #if RK_FPS
     if(gsFrameCcount++%300==0) {
         gsFrameCcount = 1;
@@ -2171,11 +2132,9 @@ void SurfaceFlinger::onMessageRefresh() {
         property_get("debug.sf.fps", value, "0");
         mDebugFPS = atoi(value);
     }
-
     if (mDebugFPS > 0)
         debugShowFPS();
 #endif
-
     if (mVisibleRegionsDirty) {
         mVisibleRegionsDirty = false;
         if (mTracingEnabled && mAddCompositionStateToTrace) {
@@ -2619,24 +2578,7 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
     }
 
     display->setLayerStack(state.layerStack);
-
-    //display->setProjection(state.orientation, state.viewport, state.frame);
-    //Per-orientation Width Height problem
-    if(creationArgs.physicalOrientation == ui::ROTATION_90 ||
-       creationArgs.physicalOrientation == ui::ROTATION_270)
-    {
-        //ALOGE("rk-debug[%s %d] name:%s physicalOrientation:%d \n",
-        //    __FUNCTION__,__LINE__,state.displayName.c_str(),creationArgs.physicalOrientation);
-        display->setProjection(state.orientation, Rect(display->getHeight(),
-                                 display->getWidth()), Rect(display->getHeight(), display->getWidth()));
-    }
-    else{
-        //ALOGE("rk-debug[%s %d] name:%s physicalOrientation:%d \n",
-        //    __FUNCTION__,__LINE__,state.displayName.c_str(),creationArgs.physicalOrientation);
-        display->setProjection(state.orientation, state.viewport, state.frame);
-    }
-    //end
-
+    display->setProjection(state.orientation, state.viewport, state.frame);
     display->setDisplayName(state.displayName);
 
     return display;
@@ -4260,8 +4202,7 @@ void SurfaceFlinger::onInitializeDisplays() {
                         {});
 
     setPowerModeInternal(display, hal::PowerMode::ON);
-
-    const nsecs_t vsyncPeriod = getVsyncPeriod();
+    const nsecs_t vsyncPeriod = mRefreshRateConfigs->getCurrentRefreshRate().getVsyncPeriod();
     mAnimFrameTracker.setDisplayRefreshPeriod(vsyncPeriod);
 
     // Use phase of 0 since phase is not known.
@@ -4296,7 +4237,7 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& display, hal:
     if (mInterceptor->isEnabled()) {
         mInterceptor->savePowerModeUpdate(display->getSequenceId(), static_cast<int32_t>(mode));
     }
-
+    const auto vsyncPeriod = mRefreshRateConfigs->getCurrentRefreshRate().getVsyncPeriod();
     if (currentMode == hal::PowerMode::OFF) {
         if (SurfaceFlinger::setSchedFifo(true) != NO_ERROR) {
             ALOGW("Couldn't set SCHED_FIFO on display on: %s\n", strerror(errno));
@@ -4305,7 +4246,7 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& display, hal:
         if (display->isPrimary() && mode != hal::PowerMode::DOZE_SUSPEND) {
             getHwComposer().setVsyncEnabled(*displayId, mHWCVsyncPendingState);
             mScheduler->onScreenAcquired(mAppConnectionHandle);
-            mScheduler->resyncToHardwareVsync(true, getVsyncPeriod());
+            mScheduler->resyncToHardwareVsync(true, vsyncPeriod);
         }
 
         mVisibleRegionsDirty = true;
@@ -4332,7 +4273,7 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& display, hal:
         getHwComposer().setPowerMode(*displayId, mode);
         if (display->isPrimary() && currentMode == hal::PowerMode::DOZE_SUSPEND) {
             mScheduler->onScreenAcquired(mAppConnectionHandle);
-            mScheduler->resyncToHardwareVsync(true, getVsyncPeriod());
+            mScheduler->resyncToHardwareVsync(true, vsyncPeriod);
         }
     } else if (mode == hal::PowerMode::DOZE_SUSPEND) {
         // Leave display going to doze
@@ -4445,7 +4386,7 @@ void SurfaceFlinger::listLayersLocked(std::string& result) const {
 }
 
 void SurfaceFlinger::dumpStatsLocked(const DumpArgs& args, std::string& result) const {
-    StringAppendF(&result, "%" PRId64 "\n", getVsyncPeriod());
+    StringAppendF(&result, "%" PRId64 "\n", getVsyncPeriodFromHWC());
 
     if (args.size() > 1) {
         const auto name = String8(args[1]);
@@ -4510,7 +4451,7 @@ void SurfaceFlinger::dumpVSync(std::string& result) const {
     mPhaseConfiguration->dump(result);
     StringAppendF(&result,
                   "      present offset: %9" PRId64 " ns\t     VSYNC period: %9" PRId64 " ns\n\n",
-                  dispSyncPresentTimeOffset, getVsyncPeriod());
+                  dispSyncPresentTimeOffset, getVsyncPeriodFromHWC());
 
     scheduler::RefreshRateConfigs::Policy policy = mRefreshRateConfigs->getDisplayManagerPolicy();
     StringAppendF(&result,
@@ -5885,31 +5826,7 @@ void SurfaceFlinger::renderScreenImplLocked(const RenderArea& renderArea,
     // buffer bounds.
     clientCompositionDisplay.physicalDisplay = Rect(reqWidth, reqHeight);
     clientCompositionDisplay.clip = sourceCrop;
-
-    //we need consider internalDisplayOrientation when renderScreenImpl
-    //clientCompositionDisplay.orientation = rotation;
-    android::ui::Rotation r = android::ui::ROTATION_0;
-
-    switch (rotation) {
-        case ui::Transform::ROT_0:
-            r =  android::ui::ROTATION_0;
-            break;
-        case ui::Transform::ROT_90:
-            r =  android::ui::ROTATION_90;
-            break;
-        case ui::Transform::ROT_180:
-            r =  android::ui::ROTATION_180;
-            break;
-        case ui::Transform::ROT_270:
-            r =  android::ui::ROTATION_270;
-            break;
-        default:
-            r = android::ui::ROTATION_0;
-            break;
-    }
-
-    android::ui::Rotation new_orientation = (android::ui::Rotation)(((int)r + (int)internalDisplayOrientation) % 4);
-    clientCompositionDisplay.orientation = ui::Transform::toRotationFlags(new_orientation);
+    clientCompositionDisplay.orientation = rotation;
 
     clientCompositionDisplay.outputDataspace = renderArea.getReqDataSpace();
     clientCompositionDisplay.maxLuminance = DisplayDevice::sDefaultMaxLumiance;
@@ -6320,6 +6237,11 @@ status_t SurfaceFlinger::setFrameRate(const sp<IGraphicBufferProducer>& surface,
         Mutex::Autolock lock(mStateLock);
         if (authenticateSurfaceTextureLocked(surface)) {
             sp<Layer> layer = (static_cast<MonitoredProducer*>(surface.get()))->getLayer();
+            if (layer == nullptr) {
+                ALOGE("Attempt to set frame rate on a layer that no longer exists");
+                return BAD_VALUE;
+            }
+
             if (layer->setFrameRate(
                         Layer::FrameRate(frameRate,
                                          Layer::FrameRate::convertCompatibility(compatibility)))) {
