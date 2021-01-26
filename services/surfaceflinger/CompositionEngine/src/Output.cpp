@@ -321,6 +321,34 @@ void Output::present(const compositionengine::CompositionRefreshArgs& refreshArg
     postFramebuffer();
 }
 
+/* For HWC2 adapter to HWC1 */
+void Output::updateInfoForHwc2On1Adapter(const compositionengine::CompositionRefreshArgs& refreshArgs) {
+    ATRACE_CALL();
+    ALOGV(__FUNCTION__);
+
+    updateColorProfile(refreshArgs);
+    updateAndWriteCompositionState(refreshArgs);
+    setColorTransform(refreshArgs);
+}
+
+void Output::presentForHwc2On1Adapter(const compositionengine::CompositionRefreshArgs& refreshArgs) {
+    ATRACE_CALL();
+    ALOGV(__FUNCTION__);
+
+    beginFrame();
+    prepareFrame();
+    devOptRepaintFlash(refreshArgs);
+    finishFrame(refreshArgs);
+}
+
+void Output::postBufferForHwc2On1Adapter() {
+    ATRACE_CALL();
+    ALOGV(__FUNCTION__);
+
+    postFramebuffer();
+}
+/*  */
+
 void Output::rebuildLayerStacks(const compositionengine::CompositionRefreshArgs& refreshArgs,
                                 LayerFESet& layerFESet) {
     ATRACE_CALL();
