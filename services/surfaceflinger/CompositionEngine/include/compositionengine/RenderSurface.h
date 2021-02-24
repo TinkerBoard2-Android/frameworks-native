@@ -82,6 +82,9 @@ public:
     // Allocates a buffer as scratch space for GPU composition
     virtual sp<GraphicBuffer> dequeueBuffer(base::unique_fd* bufferFence) = 0;
 
+    // RK: Call NativeWindows perform interface
+    virtual int perform(int operation, uint64_t usage) = 0;
+
     // Queues the drawn buffer for consumption by HWC. readyFence is the fence
     // which will fire when the buffer is ready for consumption.
     virtual void queueBuffer(base::unique_fd readyFence) = 0;

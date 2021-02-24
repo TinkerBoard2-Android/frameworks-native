@@ -642,10 +642,10 @@ void OutputLayer::applyDeviceLayerRequest(hal::LayerRequest request) {
         case hal::LayerRequest::CLEAR_CLIENT_TARGET:
             state.clearClientTarget = true;
             break;
-
         default:
-            ALOGE("[%s] Unknown device layer request %s (%d)", getLayerFE().getDebugName(),
-                  toString(request).c_str(), static_cast<int>(request));
+            // RK: ignore request==0, because RK AFBC/no AFBC feature for FramebufferSurface
+            ALOGE_IF(static_cast<int>(request)!=0,"[%s] Unknown device layer request %s (%d)",
+                     getLayerFE().getDebugName(),toString(request).c_str(), static_cast<int>(request));
             break;
     }
 }

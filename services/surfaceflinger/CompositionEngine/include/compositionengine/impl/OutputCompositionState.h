@@ -54,6 +54,9 @@ struct OutputCompositionState {
     // composition
     bool flipClientTarget{false};
 
+    // If true, the client target should be used afbc format
+    bool useNoAfbcClientTarget{false};
+
     // If true, the current frame reused the buffer from a previous client composition
     bool reusedClientComposition{false};
 

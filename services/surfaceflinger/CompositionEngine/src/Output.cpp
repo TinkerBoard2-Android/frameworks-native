@@ -42,6 +42,7 @@
 #include <ui/HdrCapabilities.h>
 #include <utils/Trace.h>
 
+#include <gui/Surface.h>
 #include "TracedOrdinal.h"
 
 #include <cutils/properties.h>
@@ -52,6 +53,11 @@ namespace android::compositionengine {
 Output::~Output() = default;
 
 namespace impl {
+
+// MALI_GRALLOC_USAGE_NO_AFBC 是 arm_gralloc 扩展的 私有的 usage_bit_flag,
+// 定义在 hardware/rockchip/libgralloc/bifrost/src/mali_gralloc_usages.h 中
+#define GRALLOC_USAGE_PRIVATE_1 1ULL << 29
+#define MALI_GRALLOC_USAGE_NO_AFBC GRALLOC_USAGE_PRIVATE_1
 
 namespace {
 
@@ -875,6 +881,22 @@ std::optional<base::unique_fd> Output::composeSurfaces(
     // flipClientTarget request for this frame on this output, we still need to
     // dequeue a buffer.
     if (hasClientComposition || outputState.flipClientTarget) {
+
+        /*
+         * RK: Support use MALI_GRALLOC_USAGE_NO_AFBC usage to enable/disable
+         *     FramebufferSurface AFBC compression format. This usage is
+         *     set true from HWC.
+         */
+        if(outputState.useNoAfbcClientTarget)
+            mRenderSurface->perform(NATIVE_WINDOW_SET_USAGE,
+                                    MALI_GRALLOC_USAGE_NO_AFBC | GRALLOC_USAGE_HW_FB |
+                                    GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER);
+        else
+            mRenderSurface->perform(NATIVE_WINDOW_SET_USAGE,
+                                    GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_COMPOSER |
+                                    GRALLOC_USAGE_HW_RENDER);
+        // RK: end.
+
         buf = mRenderSurface->dequeueBuffer(&fd);
         if (buf == nullptr) {
             ALOGW("Dequeuing buffer for display [%s] failed, bailing out of "
