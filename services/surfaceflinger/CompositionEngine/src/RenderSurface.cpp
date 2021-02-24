@@ -171,9 +171,7 @@ sp<GraphicBuffer> RenderSurface::dequeueBuffer(base::unique_fd* bufferFence) {
 
 int RenderSurface::perform(int operation, uint64_t usage) {
    // va_list args;
-
-    ALOGD("rk-debug-sf set perform ver1"); 
-
+    ALOGD("surfacefliner set perform ver1 \n");
    // va_start(args, operation);
     int result = mNativeWindow->perform(mNativeWindow.get(),operation,usage);  //0x10001a00
    // va_end(args);
