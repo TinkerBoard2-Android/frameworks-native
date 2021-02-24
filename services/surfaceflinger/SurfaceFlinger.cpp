@@ -2123,6 +2123,7 @@ void SurfaceFlinger::onMessageRefresh() {
     else
         refreshArgs.useAfbcTargetComposition =  false;
 
+    ALOGD("rk-debug-sf useAfbcTargetComposition=%d",refreshArgs.useAfbcTargetComposition);    
     mGeometryInvalid = false;
 
     // Store the present time just before calling to the composition engine so we could notify
