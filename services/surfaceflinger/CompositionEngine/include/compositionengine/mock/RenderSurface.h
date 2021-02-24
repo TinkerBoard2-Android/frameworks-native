@@ -40,7 +40,6 @@ public:
     MOCK_METHOD1(beginFrame, status_t(bool mustRecompose));
     MOCK_METHOD2(prepareFrame, void(bool, bool));
     MOCK_METHOD1(dequeueBuffer, sp<GraphicBuffer>(base::unique_fd*));
-	MOCK_METHOD2(perform, int(int,uint64_t));
     MOCK_METHOD1(queueBuffer, void(base::unique_fd));
     MOCK_METHOD0(onPresentDisplayCompleted, void());
     MOCK_METHOD0(flip, void());

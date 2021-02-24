@@ -169,14 +169,6 @@ sp<GraphicBuffer> RenderSurface::dequeueBuffer(base::unique_fd* bufferFence) {
     return mGraphicBuffer;
 }
 
-int RenderSurface::perform(int operation, uint64_t usage) {
-   // va_list args;
-    ALOGD("rk-debug-sf set perform ver1"); 
-   // va_start(args, operation);
-    int result = mNativeWindow->perform(mNativeWindow.get(),operation,usage);  //0x10001a00
-   // va_end(args);
-    return result;
-}
 void RenderSurface::queueBuffer(base::unique_fd readyFence) {
     auto& state = mDisplay.getState();
 

@@ -204,7 +204,6 @@ private:
 
     // Returns the slot of the next free buffer if one is available or
     // BufferQueueCore::INVALID_BUFFER_SLOT otherwise
-    int getFreeFBBufferLocked( bool isafbc) const ;
     int getFreeBufferLocked() const;
 
     // Returns the next free slot if one is available or
@@ -224,7 +223,7 @@ private:
         Attach,
     };
     status_t waitForFreeSlotThenRelock(FreeSlotCaller caller, std::unique_lock<std::mutex>& lock,
-            int* found,bool isafbc,bool isfb) const;
+            int* found) const;
 
     sp<BufferQueueCore> mCore;
 

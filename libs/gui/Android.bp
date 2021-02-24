@@ -38,7 +38,7 @@ cc_library_shared {
     },
     double_loadable: true,
 
-    defaults: ["libgui_bufferqueue-defaults","cc_libgui_defaults"],
+    defaults: ["libgui_bufferqueue-defaults"],
 
     srcs: [
         ":framework_native_aidl",
@@ -245,26 +245,6 @@ cc_defaults {
     export_include_dirs: [
         "include",
     ],
-}
-
-bootstrap_go_package {
-    name: "soong-libgui",
-    pkgPath: "android/soong/libgui",
-    deps: [
-        "blueprint",
-        "blueprint-pathtools",
-        "soong",
-        "soong-android",
-        "soong-cc",
-        "soong-genrule",
-    ],
-    srcs: [
-          "Android.go",
-    ],
-    pluginFor: ["soong_build"],
-}
-cc_libgui {
-    name: "cc_libgui_defaults"
 }
 
 // GMocks for use by external code
