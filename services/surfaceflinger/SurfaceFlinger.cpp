@@ -2116,7 +2116,14 @@ void SurfaceFlinger::onMessageRefresh() {
         refreshArgs.devOptFlashDirtyRegionsDelay =
                 std::chrono::milliseconds(mDebugRegion > 1 ? mDebugRegion : 0);
     }
+    const auto* dpy = ON_MAIN_THREAD(getDefaultDisplayDeviceLocked()).get();
 
+    if(dpy)
+        refreshArgs.useAfbcTargetComposition =  getHwComposer().hasClientAFBC(*dpy->getId());
+    else
+        refreshArgs.useAfbcTargetComposition =  false;
+
+    ALOGD("rk-debug-sf useAfbcTargetComposition=%d",refreshArgs.useAfbcTargetComposition);    
     mGeometryInvalid = false;
 
     // Store the present time just before calling to the composition engine so we could notify

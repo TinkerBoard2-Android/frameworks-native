@@ -384,7 +384,7 @@ private:
 
     struct DisplayData {
         bool isVirtual = false;
-        bool hasClientafbc = false;
+		bool hasClientafbc = false;
         std::unique_ptr<HWC2::Display> hwcDisplay;
         sp<Fence> lastPresentFence = Fence::NO_FENCE; // signals when the last set op retires
         std::unordered_map<HWC2::Layer*, sp<Fence>> releaseFences;

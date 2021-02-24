@@ -1,16 +1,17 @@
 package libsurfaceflinger
 
 import (
-    "android/soong/android"
-    "android/soong/cc"
-    //"fmt"
-    "strings"
+        "android/soong/android"
+        "android/soong/cc"
+        //"fmt"
+        "strings"
 )
 
 func init() {
-    //该打印会在执行mm命令时，打印在屏幕上
+	//该打印会在执行mm命令时，打印在屏幕上
     //fmt.Println("libgui want to conditional Compile")
-    android.RegisterModuleType("cc_libsurfaceflinger", DefaultsFactory)
+
+	android.RegisterModuleType("cc_libsurfaceflinger", DefaultsFactory)
 }
 
 func DefaultsFactory() (android.Module) {
@@ -30,9 +31,10 @@ func Defaults(ctx android.LoadHookContext) {
 
 //条件编译主要修改函数
 func globalDefaults(ctx android.BaseContext) ([]string) {
-    var cflags []string
-    //fmt.Println("BOARD_HS_DYNAMIC_AFBC_TARGET_SF:",ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET")) 
-
+	var cflags []string
+	//fmt.Println("BOARD_HS_DYNAMIC_AFBC_TARGET_SF:",ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET")) 
+	
+	
     if (strings.EqualFold(ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET"),"true")) {
         cflags = append(cflags,"-DDYNAMIC_AFBC_TARGET=1")
     }
@@ -48,7 +50,6 @@ func globalDefaults(ctx android.BaseContext) ([]string) {
     if (!strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk356x")) {
         cflags = append(cflags,"-DUSE_HWC2ON1ADAPTER=1")
     }
-
-    //将需要区分的环境变量在此区域添加 //....
-    return cflags
+	//将需要区分的环境变量在此区域添加 //....
+	return cflags
 }

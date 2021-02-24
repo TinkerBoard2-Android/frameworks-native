@@ -259,7 +259,7 @@ int BufferQueueProducer::getFreeFBBufferLocked( bool isafbc) const {
     int slot = mCore->mFreeBuffers.front();
     mCore->mFreeBuffers.pop_front();
     ALOGD("rk-debug-gui found first =%d, isafbc=%d,input_isafbc=%d",slot,mSlots[slot].mIsafbc,isafbc);
-
+    
     for(int i = 0; i < 4;i++)
     {
         if(mSlots[slot].mIsafbc == isafbc)
@@ -269,12 +269,12 @@ int BufferQueueProducer::getFreeFBBufferLocked( bool isafbc) const {
         else
         {
             mCore->mFreeBuffers.push_back(slot);
-            slot = mCore->mFreeBuffers.front();
+            slot = mCore->mFreeBuffers.front(); 
             mCore->mFreeBuffers.pop_front();
             ALOGD("rk-debug-gui found [%d] =%d, isafbc=%d,input_isafbc=%d",i,slot,mSlots[slot].mIsafbc,isafbc);
-
+           
         }
-    }
+    }    
     ALOGD("rk-debug-gui fininal found=%d, isafbc=%d,input_isafbc=%d",slot,mSlots[slot].mIsafbc,isafbc);
     return slot;
 }
@@ -357,12 +357,12 @@ status_t BufferQueueProducer::waitForFreeSlotThenRelock(FreeSlotCaller caller,
                     // If we're calling this from dequeue, prefer free buffers
                     if(isfb)
                     {
-                        slot = getFreeFBBufferLocked(isafbc);
+                        slot = getFreeFBBufferLocked(isafbc);                    
                     }
                     else
                     {
                         slot = getFreeBufferLocked();
-                    }
+                    } 
                     if (slot != BufferQueueCore::INVALID_BUFFER_SLOT) {
                         *found = slot;
                     } else if (mCore->mAllowAllocation) {
@@ -415,9 +415,9 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
                                             uint32_t width, uint32_t height, PixelFormat format,
                                             uint64_t usage, uint64_t* outBufferAge,
                                             FrameEventHistoryDelta* outTimestamps) {
-    bool need_afbc = 0;
-    bool isfb = 0;
-
+    bool need_afbc = 0;   
+    bool isfb = 0;                                            
+    
     ATRACE_CALL();
     { // Autolock scope
         std::lock_guard<std::mutex> lock(mCore->mMutex);
@@ -471,12 +471,12 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
             if(usage & GRALLOC_USAGE_PRIVATE_0)
             {
                 usage &= ~GRALLOC_USAGE_PRIVATE_0;
-                need_afbc = 1;
-                ALOGD("rk-debug-gui need afbc fb-target");
+                need_afbc = 1;   
+                ALOGD("rk-debug-gui need afbc fb-target");                
             }
-            else
+            else  
             {
-                ALOGD("rk-debug-gui no need afbc fb-target");
+                ALOGD("rk-debug-gui no need afbc fb-target");                                
             }
         }
         #endif

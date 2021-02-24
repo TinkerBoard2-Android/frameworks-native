@@ -842,7 +842,7 @@ std::optional<base::unique_fd> Output::composeSurfaces(
         const Region& debugRegion, const compositionengine::CompositionRefreshArgs& refreshArgs) {
     ATRACE_CALL();
     ALOGV(__FUNCTION__);
-    static int docompcnt = 0;
+    static int docompcnt = 0;    
     const auto& outputState = getState();
     OutputCompositionState& outputCompositionState = editState();
     const TracedOrdinal<bool> hasClientComposition = {"hasClientComposition",
@@ -850,7 +850,7 @@ std::optional<base::unique_fd> Output::composeSurfaces(
 
 #if DYNAMIC_AFBC_TARGET
     const bool hasClientAfbc = refreshArgs.useAfbcTargetComposition;
-#endif
+#endif    
     auto& renderEngine = getCompositionEngine().getRenderEngine();
     const bool supportsProtectedContent = renderEngine.supportsProtectedContent();
 
@@ -883,10 +883,10 @@ std::optional<base::unique_fd> Output::composeSurfaces(
         if(docompcnt > 10)
         {
             if(hasClientAfbc)
-                mRenderSurface->perform(NATIVE_WINDOW_SET_USAGE,GRALLOC_USAGE_PRIVATE_0 | GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER);
+                mRenderSurface->perform(NATIVE_WINDOW_SET_USAGE,GRALLOC_USAGE_PRIVATE_0 | GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER); 
             else
-                mRenderSurface->perform(NATIVE_WINDOW_SET_USAGE, GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER);
-        }
+                mRenderSurface->perform(NATIVE_WINDOW_SET_USAGE, GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER); 
+        }  
         #endif
         buf = mRenderSurface->dequeueBuffer(&fd);
         if (buf == nullptr) {
