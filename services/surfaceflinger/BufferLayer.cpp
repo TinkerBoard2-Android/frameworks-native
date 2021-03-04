@@ -548,7 +548,8 @@ bool BufferLayer::latchUnsignaledBuffers() {
     std::lock_guard<std::mutex> lock(mutex);
     if (!propertyLoaded) {
         char value[PROPERTY_VALUE_MAX] = {};
-        property_get("debug.sf.latch_unsignaled", value, "0");
+        //Google default 0, but rk changed. acquireFence will be waited before vop refresh.
+        property_get("debug.sf.latch_unsignaled", value, "1");
         latch = atoi(value);
         propertyLoaded = true;
     }
