@@ -34,16 +34,9 @@ func globalDefaults(ctx android.BaseContext) ([]string) {
     var cflags []string
     //fmt.Println("BOARD_HS_DYNAMIC_AFBC_TARGET_comp:",ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET"))
 
-    if ( strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk3328") ||
-         strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk3326") ||
-         strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk3399") ||
-         strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk3368")) {
+    if (!strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk356x")){
         cflags = append(cflags,"-DDISABLE_EXTERNAL_DISP_AFBC=1")
         cflags = append(cflags,"-DUSE_HWC2ON1ADAPTER=1")
-    }
-
-    if (!strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk356x")) {
-        cflags = append(cflags,"-DDISABLE_EXTERNAL_DISP_AFBC=1")
     }
 
     if (strings.EqualFold(ctx.AConfig().Getenv("TARGET_RK_GRALLOC_VERSION"),"4") ) {
