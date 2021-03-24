@@ -881,7 +881,7 @@ std::optional<base::unique_fd> Output::composeSurfaces(
     // flipClientTarget request for this frame on this output, we still need to
     // dequeue a buffer.
     if (hasClientComposition || outputState.flipClientTarget) {
-
+#if USE_HWC2ON1ADAPTER==0 // If use HWC1 , disable this feature.
         /*
          * RK: Support use MALI_GRALLOC_USAGE_NO_AFBC usage to enable/disable
          *     FramebufferSurface AFBC compression format. This usage is
@@ -896,7 +896,7 @@ std::optional<base::unique_fd> Output::composeSurfaces(
                                     GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_COMPOSER |
                                     GRALLOC_USAGE_HW_RENDER);
         // RK: end.
-
+#endif
         buf = mRenderSurface->dequeueBuffer(&fd);
         if (buf == nullptr) {
             ALOGW("Dequeuing buffer for display [%s] failed, bailing out of "

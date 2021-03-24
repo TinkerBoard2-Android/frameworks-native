@@ -3,7 +3,7 @@ package libsurfaceflinger
 import (
         "android/soong/android"
         "android/soong/cc"
-        "fmt"
+        //"fmt"
         "strings"
 )
 
@@ -31,25 +31,21 @@ func Defaults(ctx android.LoadHookContext) {
 
 //条件编译主要修改函数
 func globalDefaults(ctx android.BaseContext) ([]string) {
-	var cflags []string
-	fmt.Println("BOARD_HS_DYNAMIC_AFBC_TARGET_SF:",ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET")) 
-	
-	
-    if (strings.EqualFold(ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET"),"true")) {
-        cflags = append(cflags,"-DDYNAMIC_AFBC_TARGET=1")
-    }
+    var cflags []string
+    //fmt.Println("BOARD_HS_DYNAMIC_AFBC_TARGET_SF:",ctx.AConfig().Getenv("BOARD_HS_DYNAMIC_AFBC_TARGET"))
 
-    if (!strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk356x")) {
+    if ( strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk3328") ||
+         strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk3326") ||
+         strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk3399") ||
+         strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk3368")) {
         cflags = append(cflags,"-DDISABLE_EXTERNAL_DISP_AFBC=1")
+        cflags = append(cflags,"-DUSE_HWC2ON1ADAPTER=1")
     }
 
     if (strings.EqualFold(ctx.AConfig().Getenv("TARGET_RK_GRALLOC_VERSION"),"4") ) {
         cflags = append(cflags,"-DUSE_GRALLOC_4=1")
     }
 
-    if (!strings.EqualFold(ctx.AConfig().Getenv("TARGET_BOARD_PLATFORM"),"rk356x")) {
-        cflags = append(cflags,"-DUSE_HWC2ON1ADAPTER=1")
-    }
-	//将需要区分的环境变量在此区域添加 //....
-	return cflags
+    //将需要区分的环境变量在此区域添加 //....
+    return cflags
 }
