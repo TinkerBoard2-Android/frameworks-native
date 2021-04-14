@@ -21,6 +21,7 @@
 #include "CursorButtonAccumulator.h"
 #include "CursorScrollAccumulator.h"
 #include "TouchCursorInputMapperCommon.h"
+#include <cutils/properties.h>
 
 namespace android {
 
@@ -240,6 +241,7 @@ void CursorInputMapper::dumpParameters(std::string& dump) {
 void CursorInputMapper::reset(nsecs_t when) {
     mButtonState = 0;
     mDownTime = 0;
+    mDisplayId=0;
 
     mPointerVelocityControl.reset();
     mWheelXVelocityControl.reset();
@@ -334,7 +336,20 @@ void CursorInputMapper::sync(nsecs_t when) {
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, yCursorPosition);
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_X, deltaX);
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_Y, deltaY);
-        displayId = mPointerController->getDisplayId();
+        char mMousePresentation[PROPERTY_VALUE_MAX] = {0};
+        property_get("sys.mouse.presentation", mMousePresentation, "0");
+        if (strcmp(mMousePresentation, "1") == 0) {
+           displayId = mDisplayId;
+           float minX, minY, maxX, maxY;
+           if (mPointerController->getBounds(&minX, &minY, &maxX, &maxY)) {
+               if(xCursorPosition==minX||xCursorPosition==maxX||yCursorPosition==minY||yCursorPosition==maxY){
+                   displayId=getPolicy()->notifyDisplayIdChanged();
+                   mDisplayId=displayId;
+               }
+           }
+        }else{
+           displayId = mPointerController->getDisplayId();
+        }
     } else {
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_X, deltaX);
         pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, deltaY);
