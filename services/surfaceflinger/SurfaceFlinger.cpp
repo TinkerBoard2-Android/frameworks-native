@@ -385,9 +385,12 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
     mDebugFPS = atoi(value);
 #endif
 
-	if(access("/sys/bus/i2c/devices/i2c-8/8-0045/tinker_mcu_bl", F_OK) != -1) {
+	if (access("/sys/bus/i2c/devices/i2c-8/8-0045/tinker_mcu_bl", F_OK) != -1) {
 		ALOGI("Tinker LCD is exist. Use 160 density");
 		property_set("qemu.sf.lcd_density", "160");
+	} else if (access("/sys/bus/i2c/devices/i2c-8/8-0036/tinker_mcu_ili9881c_bl", F_OK) != -1) {
+		ALOGI("Tinker ili9881c LCD is exist. Use 209(200) density");
+		property_set("qemu.sf.lcd_density", "200");
 	}
 
     property_get("ro.bq.gpu_to_cpu_unsupported", value, "0");
